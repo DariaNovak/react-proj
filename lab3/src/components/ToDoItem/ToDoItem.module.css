@@ -1,0 +1,9 @@
+.todo {
+  color: black;
+  text-decoration: none;
+}
+
+.completed {
+  color: rgb(107, 107, 107);
+  text-decoration: line-through;
+}
