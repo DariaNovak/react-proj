@@ -5,14 +5,14 @@ export default function ToDoItem({ id, text, onDelete }) {
   const [completed, setCompleted] = useState(false);
 
   return (
-    <li className={`${styles.todo} ${completed ? styles.completed : ''}`}>
+    <li className={styles.todo}>
       <label>
         <input
           type="checkbox"
           checked={completed}
           onChange={() => setCompleted(!completed)}
         />
-        {text}
+        <span className={completed ? styles.completed : ''}>{text}</span>
       </label>
       <button onClick={() => onDelete(id)}>Delete</button>
     </li>
