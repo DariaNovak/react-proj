@@ -1,0 +1,27 @@
+.todo-controls {
+  margin-bottom: 12px;
+  text-align: center;
+}
+.todo-search {
+  margin-right: 8px;
+}
+.todo-add {
+  margin-bottom: 20px;
+  text-align: center;
+}
+.pagination {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+.pagination button {
+  min-width: 80px;
+}
+.pagination .page-info {
+  text-align: center;
+}
+.pagination .total-items {
+  font-size: 12px;
+}

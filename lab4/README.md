@@ -1,45 +1,89 @@
-# Lab 4 - Todo List
+# Lab 4,5,6 - Todo List with Pagination & Search
 
-React Todo app with local task management.
-
-## Component Tree
+## Architecture & Data Flow
 
 ```
-App
-└── TodoList
-    ├── Input + Add Button
-    └── TodoItem[] (map)
-        ├── Checkbox
-        ├── Text
-        └── Delete Button
-```
-
-## Data Flow
-
-```
-┌─────────────────┐
-│   TodoList      │
-│  useTodos() ────┼──> State: todos[], isLoading, error
-│                 │
-│  addTodo() ─────┼──> Adds locally (isLocal: true)
-│  deleteTodo() ──┼──> Deletes locally / API
-│  toggleTodo() ──┼──> Toggle locally
-└─────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  todoService    │──> API: GET /todos, DELETE /todos/:id
-└─────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  axiosConfig    │──> baseURL: dummyjson.com
-└─────────────────┘
-```
-
-### Flow Steps
-
-1. **Load**: `fetchTodos()` → API → `setTodos(data)`
-2. **Add**: `addTodo(text)` → local state (no API)
-3. **Toggle**: `toggleTodo(id)` → local state update
-4. **Delete**: `deleteTodo(id)` → local if `isLocal`, else API call
+                           App.jsx
+                       (Composition Root)
+                        No state here
+                              |
+                              | renders
+                              ↓
+                        TodoList.jsx
+                     (Container Component)
+                              |
+                       useTodos() hook
+                              |
+           ┌──────────────────┼──────────────────┐
+           |                  |                  |
+           ↓                  ↓                  ↓
+    State Management     todoService      Render Children
+           |                  |                  |
+           |                  ↓                  |
+           |           axiosConfig               |
+           |          (Axios Instance)           |
+           |                  |                  |
+           |                  ↓                  |
+           |          DummyJSON REST API         |
+           |                  |                  |
+           |    ┌─────────────┴─────────────┐   |
+           |    |                           |   |
+           |    ↓                           ↓   |
+           | GET /todos                 PUT /todos/{id}
+           | ?limit={n}&skip={m}        DELETE /todos/{id}
+           |    |                           |
+           |    └───────────┬───────────────┘
+           |                ↓
+           |         Response: { todos[], total, skip, limit }
+           |                |
+           ↓                ↓
+    ┌─────────────────────────────────┐
+    │   useTodos Hook State           │
+    ├─────────────────────────────────┤
+    │ pageTodos: Todo[]    ← API data │
+    │ todos: Todo[]        ← filtered │
+    │ searchTerm: string              │
+    │ currentPage: number             │
+    │ limitPerPage: number            │
+    │ totalTodos: number              │
+    │ isLoading: boolean              │
+    │ error: string | null            │
+    └─────────────────────────────────┘
+           |
+           | exposes functions & state
+           ↓
+    ┌─────────────────────────────────┐
+    │  TodoList Component Receives:   │
+    ├─────────────────────────────────┤
+    │ • todos (filtered)              │
+    │ • searchTerm, setSearchTerm     │
+    │ • currentPage, totalPages       │
+    │ • limitPerPage, setLimit        │
+    │ • goToNextPage, goToPrevPage    │
+    │ • addTodo, deleteTodo           │
+    │ • toggleTodo, editTodoTitle     │
+    │ • isLoading, error              │
+    └─────────────────────────────────┘
+           |
+           | maps over todos
+           ↓
+    ┌─────────────────────────────────┐
+    │  TodoItem.jsx (Presentational)  │
+    │         (multiple instances)    │
+    ├─────────────────────────────────┤
+    │ Props received:                 │
+    │  • todo: { id, todo, completed }│
+    │  • onToggle(id)                 │
+    │  • onDelete(id)                 │
+    │  • onEdit(id, newTitle)         │
+    ├─────────────────────────────────┤
+    │ Internal State:                 │
+    │  • isEditing: boolean           │
+    │  • editText: string             │
+    ├─────────────────────────────────┤
+    │ Renders:                        │
+    │  • Checkbox → onToggle          │
+    │  • Text / Input → edit mode     │
+    │  • Edit/Save/Cancel buttons     │
+    │  • Delete button → onDelete     │
+    └─────────────────────────────────┘
