@@ -92,8 +92,8 @@
 
 ## PATTERNS
 
- Custom Hooks — винесення логіки у useTodos для переиспользування
- Container/Presentational — TodoList керує даними, TodoItem відображає UI
- Service Layer — todoService централізує всі API виклики
- Observer — useEffect реагує на зміни стану (pagination, search)
- Strategy — різна логіка для локальних та серверних todos
+ - Custom Hooks — винесення логіки у useTodos для переиспользування
+ - Container/Presentational — TodoList керує даними, TodoItem відображає UI
+ - Service Layer — todoService централізує всі API виклики
+ - Observer — useEffect реагує на зміни стану (pagination, search)
+ - Strategy — різна логіка для локальних та серверних todos
