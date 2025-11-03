@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { todoService } from '../services/todoService';
 
 export const useTodos = () => {
@@ -49,6 +49,7 @@ export const useTodos = () => {
     });
     setTodos(filtered);
   }, [pageTodos, searchTerm]);
+
   const totalPages = useMemo(
     () => Math.ceil(totalTodos / limitPerPage) || 1,
     [totalTodos, limitPerPage]
@@ -66,7 +67,8 @@ export const useTodos = () => {
     setLimitPerPage(Number(limit) || 1);
     setCurrentPage(1);
   };
-  const editTodoTitle = async (id, newTitle) => {
+
+  const editTodoTitle = useCallback(async (id, newTitle) => {
     const local = pageTodos.find((t) => t.id === id);
     if (local && local.isLocal) {
       const updated = pageTodos.map((t) =>
@@ -81,7 +83,6 @@ export const useTodos = () => {
       const updatedRemote = await todoService.updateTodo(id, {
         todo: newTitle,
       });
-      // update local arrays
       const updatedPage = pageTodos.map((t) =>
         t.id === id ? { ...t, ...updatedRemote } : t
       );
@@ -91,9 +92,9 @@ export const useTodos = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pageTodos]); 
 
-  const deleteTodo = async (id) => {
+  const deleteTodo = useCallback(async (id) => {
     const todo = pageTodos.find((t) => t.id === id);
     if (todo && todo.isLocal) {
       setPageTodos(pageTodos.filter((t) => t.id !== id));
@@ -105,9 +106,10 @@ export const useTodos = () => {
     } catch (err) {
       setError(err.message);
     }
-  };
+  }, [pageTodos]);
 
-  const addTodo = (todoText) => {
+
+  const addTodo = useCallback((todoText) => {
     const newTodo = {
       id: Date.now(),
       todo: todoText,
@@ -116,9 +118,9 @@ export const useTodos = () => {
       isLocal: true,
     };
     setPageTodos((prev) => [newTodo, ...prev]);
-  };
+  }, []);
 
-  const toggleTodo = (id) => {
+  const toggleTodo = useCallback((id) => {
     const todo = pageTodos.find((t) => t.id === id);
     if (todo && todo.isLocal) {
       setPageTodos(
@@ -133,7 +135,7 @@ export const useTodos = () => {
         t.id === id ? { ...t, completed: !t.completed } : t
       )
     );
-  };
+  }, [pageTodos]);
 
   useEffect(() => {
     fetchTodos();

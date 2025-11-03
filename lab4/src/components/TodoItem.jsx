@@ -1,37 +1,49 @@
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 
-export const TodoItem = ({ todo, onToggle, onDelete, onEdit }) => {
+export const TodoItem = memo(({ todo, onToggle, onDelete, onEdit }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.todo || '');
 
-  const startEdit = () => {
+  const startEdit = useCallback(() => {
     setEditText(todo.todo || '');
     setIsEditing(true);
-  };
+  }, [todo.todo]);
 
-  const cancelEdit = () => {
+  const cancelEdit = useCallback(() => {
     setIsEditing(false);
     setEditText(todo.todo || '');
-  };
+  }, [todo.todo]);
 
-  const saveEdit = () => {
+  const saveEdit = useCallback(() => {
     const trimmed = (editText || '').trim();
     if (!trimmed) return;
     onEdit && onEdit(todo.id, trimmed);
     setIsEditing(false);
-  };
+  }, [editText, onEdit, todo.id]);
 
-  const onKeyDown = (e) => {
+  const onKeyDown = useCallback((e) => {
     if (e.key === 'Enter') saveEdit();
     if (e.key === 'Escape') cancelEdit();
-  };
+  }, [saveEdit, cancelEdit]);
+
+  const handleToggle = useCallback(() =>{
+    onToggle(todo.id);
+  }, [onToggle, todo.id]);
+
+  const handleDelete = useCallback(() =>{
+    onDelete(todo.id);
+  }, [onDelete, todo.id]);
+
+  const handleTextChange = useCallback((e) =>{
+    setEditText(e.target.value);
+  }, []);
 
   return (
     <div className="todo-item">
       <input
         type="checkbox"
         checked={!!todo.completed}
-        onChange={() => onToggle(todo.id)}
+        onChange={handleToggle}
       />
 
       {!isEditing ? (
@@ -46,7 +58,7 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }) => {
           <input
             type="text"
             value={editText}
-            onChange={(e) => setEditText(e.target.value)}
+            onChange={handleTextChange}
             onKeyDown={onKeyDown}
             autoFocus
           />
@@ -55,9 +67,9 @@ export const TodoItem = ({ todo, onToggle, onDelete, onEdit }) => {
         </>
       )}
 
-      <button className="delete-btn" onClick={() => onDelete(todo.id)}>
+      <button className="delete-btn" onClick={handleDelete}>
         Delete
       </button>
     </div>
   );
-};
+});
