@@ -3,7 +3,6 @@ import { todoService } from '../services/todoService';
 
 export const useTodos = () => {
   const [pageTodos, setPageTodos] = useState([]);
-  const [todos, setTodos] = useState([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -37,76 +36,85 @@ export const useTodos = () => {
     }
   };
 
-  useEffect(() => {
+
+  const todos = useMemo(() => {
     if (!searchTerm) {
-      setTodos(pageTodos);
-      return;
+      return pageTodos;
     }
+
     const term = searchTerm.toLowerCase();
-    const filtered = pageTodos.filter((t) => {
+    return pageTodos.filter((t) => {
       const text = String(t.todo || t.title || '').toLowerCase();
       return text.includes(term);
     });
-    setTodos(filtered);
-  }, [pageTodos, searchTerm]);
+  }, [pageTodos, searchTerm]); 
 
   const totalPages = useMemo(
     () => Math.ceil(totalTodos / limitPerPage) || 1,
     [totalTodos, limitPerPage]
   );
 
-  const goToNextPage = () => {
+  const goToNextPage = useCallback(() => {
     setCurrentPage((p) => Math.min(p + 1, totalPages));
-  };
+  }, [totalPages]);
 
-  const goToPrevPage = () => {
+  const goToPrevPage = useCallback(() => {
     setCurrentPage((p) => Math.max(p - 1, 1));
-  };
+  }, []); 
 
-  const setLimit = (limit) => {
+  const setLimit = useCallback((limit) => {
     setLimitPerPage(Number(limit) || 1);
     setCurrentPage(1);
-  };
+  }, []);
 
   const editTodoTitle = useCallback(async (id, newTitle) => {
-    const local = pageTodos.find((t) => t.id === id);
-    if (local && local.isLocal) {
-      const updated = pageTodos.map((t) =>
-        t.id === id ? { ...t, todo: newTitle } : t
-      );
-      setPageTodos(updated);
-      return;
-    }
+    let isLocal = false;
+    setPageTodos((prev) => {
+      const local = prev.find((t) => t.id === id);
+      if (local && local.isLocal) {
+        isLocal = true;
+        return prev.map((t) => (t.id === id ? { ...t, todo: newTitle } : t));
+      }
+      return prev; 
+    });
+
+    if (isLocal) return;
 
     try {
       setIsLoading(true);
       const updatedRemote = await todoService.updateTodo(id, {
         todo: newTitle,
       });
-      const updatedPage = pageTodos.map((t) =>
-        t.id === id ? { ...t, ...updatedRemote } : t
+      setPageTodos((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, ...updatedRemote } : t))
       );
-      setPageTodos(updatedPage);
     } catch (err) {
       setError(err.message || 'Update failed');
     } finally {
       setIsLoading(false);
     }
-  }, [pageTodos]); 
+  }, []);
 
   const deleteTodo = useCallback(async (id) => {
-    const todo = pageTodos.find((t) => t.id === id);
-    if (todo && todo.isLocal) {
-      setPageTodos(pageTodos.filter((t) => t.id !== id));
-      return;
-    }
+    let isLocal = false;
+    setPageTodos((prev) => {
+      const todo = prev.find((t) => t.id === id);
+      if (todo && todo.isLocal) {
+        isLocal = true;
+        return prev.filter((t) => t.id !== id);
+      }
+      return prev;
+    });
+
+    if (isLocal) return;
+
     try {
       await todoService.deleteTodo(id);
-      setPageTodos(pageTodos.filter((t) => t.id !== id));
+      setPageTodos((prev) => prev.filter((t) => t.id !== id));
     } catch (err) {
       setError(err.message);
     }
-  }, [pageTodos]);
+  }, []);
 
 
   const addTodo = useCallback((todoText) => {
@@ -121,21 +129,10 @@ export const useTodos = () => {
   }, []);
 
   const toggleTodo = useCallback((id) => {
-    const todo = pageTodos.find((t) => t.id === id);
-    if (todo && todo.isLocal) {
-      setPageTodos(
-        pageTodos.map((t) =>
-          t.id === id ? { ...t, completed: !t.completed } : t
-        )
-      );
-      return;
-    }
-    setPageTodos(
-      pageTodos.map((t) =>
-        t.id === id ? { ...t, completed: !t.completed } : t
-      )
+    setPageTodos((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
     );
-  }, [pageTodos]);
+  }, []);
 
   useEffect(() => {
     fetchTodos();

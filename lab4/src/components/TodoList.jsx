@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useTodos } from '../hooks/useTodos';
 import { TodoItem } from './TodoItem';
 import './TodoList.css';
@@ -25,11 +25,11 @@ export const TodoList = () => {
 
   const [newTodoText, setNewTodoText] = useState('');
 
-  const handleAddTodo = () => {
+  const handleAddTodo = useCallback(() => {
     if (newTodoText.trim() === '') return;
     addTodo(newTodoText);
     setNewTodoText('');
-  };
+  }, [newTodoText, addTodo]);
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
@@ -70,7 +70,7 @@ export const TodoList = () => {
             todo={todo}
             onToggle={toggleTodo}
             onDelete={deleteTodo}
-            onEdit={(id, newTitle) => editTodoTitle(id, newTitle)}
+            onEdit={editTodoTitle}
           />
         ))}
       </div>
